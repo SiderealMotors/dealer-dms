@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar-width: 220px;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-slate-900; }
+::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded-full; }
+
+/* Focus ring */
+*:focus-visible {
+  @apply outline-none ring-2 ring-sky-500 ring-offset-1 ring-offset-slate-950;
+}
+
+/* Table defaults */
+.data-table { @apply w-full text-sm; }
+.data-table th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-900/60 border-b border-slate-800; }
+.data-table td { @apply px-3 py-2.5 border-b border-slate-800/60; }
+.data-table tr:hover td { @apply bg-slate-800/40; }
+
+/* Cards */
+.card { @apply bg-slate-900 border border-slate-800 rounded-xl; }
+.card-header { @apply px-5 py-4 border-b border-slate-800 flex items-center justify-between; }
+.card-body { @apply p-5; }
+
+/* Stat cards */
+.stat-card { @apply card p-5 flex flex-col gap-1; }
+.stat-label { @apply text-xs font-semibold uppercase tracking-wider text-slate-400; }
+.stat-value { @apply text-2xl font-semibold text-white; }
+.stat-sub { @apply text-sm text-slate-400; }
+
+/* Badges */
+.badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold; }
+.badge-green { @apply badge bg-emerald-900/60 text-emerald-300; }
+.badge-yellow { @apply badge bg-amber-900/60 text-amber-300; }
+.badge-red { @apply badge bg-red-900/60 text-red-300; }
+.badge-blue { @apply badge bg-sky-900/60 text-sky-300; }
+.badge-gray { @apply badge bg-slate-800 text-slate-300; }
+.badge-purple { @apply badge bg-purple-900/60 text-purple-300; }
+
+/* Buttons */
+.btn { @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50; }
+.btn-primary { @apply btn bg-sky-600 hover:bg-sky-500 text-white; }
+.btn-secondary { @apply btn border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100; }
+.btn-danger { @apply btn bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-800; }
+.btn-ghost { @apply btn hover:bg-slate-800 text-slate-300; }
+.btn-sm { @apply text-xs px-3 py-1.5; }
+
+/* Inputs */
+.input { @apply bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 transition-colors w-full; }
+.select { @apply input appearance-none cursor-pointer; }
+.label { @apply block text-xs font-semibold text-slate-400 mb-1; }
+
+/* Form groups */
+.form-group { @apply flex flex-col gap-1; }
+
+/* Profit colours */
+.profit-pos { @apply text-emerald-400 font-semibold; }
+.profit-neg { @apply text-red-400 font-semibold; }
+
+/* Print styles for bill of sale */
+@media print {
+  aside, .print\:hidden { display: none !important; }
+  body { background: white !important; }
+  main { overflow: visible !important; }
+}
