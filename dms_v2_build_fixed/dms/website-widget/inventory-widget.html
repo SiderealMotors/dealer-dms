@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory Widget — Embed Demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f5f5f5; padding: 2rem; }
+  h2 { margin-bottom: 1rem; color: #333; }
+  .demo-note { background: #fff3cd; border: 1px solid #ffc107; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; font-size: 14px; color: #664d03; }
+  code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<h2>Inventory Widget — Website Embed Demo</h2>
+<div class="demo-note">
+  <strong>How to embed on your website:</strong><br>
+  Add this single line to any page: <code>&lt;script src="https://your-dms-domain.com/widget.js" data-api="https://your-api.com"&gt;&lt;/script&gt;</code><br>
+  Works on WordPress, Squarespace, Wix, or any custom site. No framework required.
+</div>
+
+<!-- The widget mounts here — this is all your customer website needs -->
+<div id="sidereal-inventory"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Sidereal Motors — Inventory Widget
+// Drop this entire <script> block onto any website page.
+// Configure API_BASE to point to your deployed backend.
+// ─────────────────────────────────────────────────────────────────────────────
+
+(function() {
+  const API_BASE = window.DMS_API_BASE || 'http://localhost:4000';
+  const MOUNT_ID = 'sidereal-inventory';
+
+  // ── Styles ──────────────────────────────────────────────────────────────────
+  const css = `
+    .dms-widget { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; }
+    .dms-header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .dms-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin: 0; }
+    .dms-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .dms-input { padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; background: #fff; outline: none; }
+    .dms-input:focus { border-color: #3b82f6; }
+    .dms-btn { padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: #2563eb; color: #fff; }
+    .dms-btn:hover { background: #1d4ed8; }
+    .dms-btn-outline { background: transparent; border: 1.5px solid #d1d5db; color: #374151; }
+    .dms-btn-outline:hover { background: #f3f4f6; }
+    .dms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .dms-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; transition: box-shadow 0.2s, transform 0.2s; cursor: pointer; }
+    .dms-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
+    .dms-photo { width: 100%; height: 200px; object-fit: cover; background: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 14px; }
+    .dms-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .dms-card-body { padding: 16px; }
+    .dms-year-make { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .dms-model { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+    .dms-trim { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+    .dms-details { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .dms-detail { font-size: 12px; background: #f3f4f6; color: #374151; padding: 3px 8px; border-radius: 20px; }
+    .dms-price-row { display: flex; align-items: center; justify-content: space-between; }
+    .dms-price { font-size: 22px; font-weight: 800; color: #111827; }
+    .dms-enquire { font-size: 13px; font-weight: 600; color: #2563eb; text-decoration: none; border: 1.5px solid #2563eb; padding: 5px 14px; border-radius: 8px; }
+    .dms-enquire:hover { background: #eff6ff; }
+    .dms-empty { text-align: center; padding: 48px 16px; color: #9ca3af; font-size: 15px; }
+    .dms-loading { text-align: center; padding: 48px 16px; color: #6b7280; }
+    .dms-count { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
+    /* Modal */
+    .dms-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .dms-modal { background: #fff; border-radius: 16px; max-width: 540px; width: 100%; padding: 28px; position: relative; max-height: 90vh; overflow-y: auto; }
+    .dms-modal-close { position: absolute; top: 16px; right: 16px; font-size: 20px; cursor: pointer; color: #6b7280; background: none; border: none; }
+    .dms-modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .dms-modal-sub { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+    .dms-form-group { margin-bottom: 16px; }
+    .dms-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .dms-field { width: 100%; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+    .dms-field:focus { outline: none; border-color: #3b82f6; }
+    textarea.dms-field { min-height: 80px; resize: vertical; }
+    .dms-submit { width: 100%; padding: 12px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .dms-submit:hover { background: #1d4ed8; }
+    .dms-success { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 14px; color: #065f46; text-align: center; font-weight: 600; }
+    .dms-error { color: #dc2626; font-size: 13px; margin-top: 8px; }
+  `;
+
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  // ── State ────────────────────────────────────────────────────────────────────
+  let vehicles = [];
+  let filtered = [];
+  let makeFilter = '';
+  let maxPrice = '';
+  let searchText = '';
+  let enquireVehicle = null;
+  let submitSuccess = false;
+  let submitError = '';
+  let submitBusy = false;
+
+  // ── Fetch ────────────────────────────────────────────────────────────────────
+  async function fetchInventory() {
+    const params = new URLSearchParams({ limit: '60' });
+    const res = await fetch(`${API_BASE}/public/inventory?${params}`);
+    const data = await res.json();
+    return data.vehicles || [];
+  }
+
+  function applyFilters() {
+    filtered = vehicles.filter(v => {
+      if (makeFilter && v.make.toLowerCase() !== makeFilter.toLowerCase()) return false;
+      if (maxPrice && v.sellingPrice > Number(maxPrice)) return false;
+      if (searchText) {
+        const q = searchText.toLowerCase();
+        if (!(v.make.toLowerCase().includes(q) || v.model.toLowerCase().includes(q) || v.trim?.toLowerCase().includes(q) || String(v.year).includes(q))) return false;
+      }
+      return true;
+    });
+  }
+
+  function fmt(n) {
+    return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+  }
+
+  function fmtOdo(n) {
+    return new Intl.NumberFormat('en-CA').format(n) + ' km';
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  function render(loading = false) {
+    const mount = document.getElementById(MOUNT_ID);
+    if (!mount) return;
+
+    const makes = [...new Set(vehicles.map(v => v.make))].sort();
+    const prices = [15000, 20000, 25000, 30000, 40000, 50000];
+
+    mount.innerHTML = `
+      <div class="dms-widget">
+        <div class="dms-header">
+          <h2 class="dms-title">Available Vehicles</h2>
+        </div>
+        <div class="dms-filters">
+          <input class="dms-input" id="dms-search" placeholder="Search make, model…" value="${searchText}" style="flex:1;min-width:180px;">
+          <select class="dms-input" id="dms-make">
+            <option value="">All makes</option>
+            ${makes.map(m => `<option value="${m}" ${makeFilter === m ? 'selected' : ''}>${m}</option>`).join('')}
+          </select>
+          <select class="dms-input" id="dms-price">
+            <option value="">Any price</option>
+            ${prices.map(p => `<option value="${p}" ${maxPrice === String(p) ? 'selected' : ''}>Under ${fmt(p)}</option>`).join('')}
+          </select>
+          <button class="dms-btn dms-btn-outline" id="dms-clear">Clear</button>
+        </div>
+        ${loading ? `<div class="dms-loading">Loading inventory…</div>` : `
+          <div class="dms-count">${filtered.length} vehicle${filtered.length !== 1 ? 's' : ''} available</div>
+          <div class="dms-grid">
+            ${filtered.length === 0 ? `<div class="dms-empty" style="grid-column:1/-1">No vehicles match your filters.</div>` : ''}
+            ${filtered.map(v => `
+              <div class="dms-card" data-id="${v.id}">
+                <div class="dms-photo">
+                  ${v.primaryPhoto ? `<img src="${v.primaryPhoto}" alt="${v.year} ${v.make} ${v.model}" loading="lazy">` : '<span>📷 Photo coming soon</span>'}
+                </div>
+                <div class="dms-card-body">
+                  <div class="dms-year-make">${v.year} · ${v.make}</div>
+                  <div class="dms-model">${v.model}</div>
+                  <div class="dms-trim">${v.trim || ''}</div>
+                  <div class="dms-details">
+                    <span class="dms-detail">🎨 ${v.colour}</span>
+                    <span class="dms-detail">📏 ${fmtOdo(v.odometer)}</span>
+                  </div>
+                  <div class="dms-price-row">
+                    <span class="dms-price">${v.sellingPrice ? fmt(v.sellingPrice) : 'Call for price'}</span>
+                    <a href="#" class="dms-enquire" data-id="${v.id}">Enquire</a>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+      ${enquireVehicle ? renderModal() : ''}
+    `;
+
+    // Event listeners
+    document.getElementById('dms-search')?.addEventListener('input', e => {
+      searchText = e.target.value; applyFilters(); render();
+    });
+    document.getElementById('dms-make')?.addEventListener('change', e => {
+      makeFilter = e.target.value; applyFilters(); render();
+    });
+    document.getElementById('dms-price')?.addEventListener('change', e => {
+      maxPrice = e.target.value; applyFilters(); render();
+    });
+    document.getElementById('dms-clear')?.addEventListener('click', () => {
+      searchText = ''; makeFilter = ''; maxPrice = '';
+      document.getElementById('dms-search').value = '';
+      applyFilters(); render();
+    });
+
+    // Enquire buttons
+    mount.querySelectorAll('[data-id]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.preventDefault();
+        const id = e.currentTarget.getAttribute('data-id');
+        enquireVehicle = vehicles.find(v => v.id === id) || null;
+        submitSuccess = false; submitError = '';
+        render();
+      });
+    });
+
+    // Modal
+    document.getElementById('dms-modal-close')?.addEventListener('click', () => {
+      enquireVehicle = null; submitSuccess = false; render();
+    });
+    document.getElementById('dms-overlay')?.addEventListener('click', e => {
+      if (e.target.id === 'dms-overlay') { enquireVehicle = null; submitSuccess = false; render(); }
+    });
+    document.getElementById('dms-enquire-form')?.addEventListener('submit', handleSubmit);
+  }
+
+  function renderModal() {
+    const v = enquireVehicle;
+    return `
+      <div class="dms-overlay" id="dms-overlay">
+        <div class="dms-modal">
+          <button class="dms-modal-close" id="dms-modal-close">✕</button>
+          <div class="dms-modal-title">Enquire about this vehicle</div>
+          <div class="dms-modal-sub">${v.year} ${v.make} ${v.model} ${v.trim || ''} — ${v.sellingPrice ? fmt(v.sellingPrice) : 'Call for price'}</div>
+          ${submitSuccess ? `<div class="dms-success">✅ Thank you! We'll be in touch shortly.</div>` : `
+            <form id="dms-enquire-form">
+              <div class="dms-form-group">
+                <label class="dms-label">Full Name *</label>
+                <input class="dms-field" name="fullName" required placeholder="Jane Smith">
+              </div>
+              <div class="dms-form-group">
+                <label class="dms-label">Phone</label>
+                <input class="dms-field" name="phone" type="tel" placeholder="(416) 555-0100">
+              </div>
+              <div class="dms-form-group">
+                <label class="dms-label">Email</label>
+                <input class="dms-field" name="email" type="email" placeholder="jane@example.com">
+              </div>
+              <div class="dms-form-group">
+                <label class="dms-label">Message</label>
+                <textarea class="dms-field" name="message" placeholder="I'm interested in this vehicle…"></textarea>
+              </div>
+              ${submitError ? `<div class="dms-error">${submitError}</div>` : ''}
+              <button class="dms-submit" type="submit" ${submitBusy ? 'disabled' : ''}>${submitBusy ? 'Sending…' : 'Send Enquiry'}</button>
+            </form>
+          `}
+        </div>
+      </div>
+    `;
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    submitBusy = true; submitError = ''; render();
+    try {
+      const res = await fetch(`${API_BASE}/public/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fd.get('fullName'),
+          phone: fd.get('phone') || undefined,
+          email: fd.get('email') || undefined,
+          vehicleId: enquireVehicle?.id,
+          message: fd.get('message') || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to send');
+      submitSuccess = true; submitBusy = false; render();
+    } catch (err) {
+      submitBusy = false; submitError = 'Something went wrong. Please call us directly.'; render();
+    }
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  async function init() {
+    const mount = document.getElementById(MOUNT_ID);
+    if (!mount) return;
+    render(true);
+    try {
+      vehicles = await fetchInventory();
+      applyFilters();
+      render();
+    } catch (e) {
+      mount.innerHTML = '<div class="dms-empty">Unable to load inventory. Please try again later.</div>';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

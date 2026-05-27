@@ -1,0 +1,8 @@
+{
+  "build": {
+    "cmd": "npm install && npx prisma generate && npx nest build"
+  },
+  "deploy": {
+    "cmd": "node dist/main"
+  }
+}
